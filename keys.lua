@@ -1,19 +1,29 @@
 #!/usr/bin/env lua
 local l = require"lib"
-local csv,kap,o,obj,oo = l.csv,l.kap,l.o,l.obj,l.oo
-local push,rnd = l.push, l.rnd
 local the = l.settings[[
 ranges.lua : report ranges that disguise best rows from rest
 (c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
 
-USAGE:   stats.lua  [OPTIONS]
+USAGE:   ranges.lua  [OPTIONS]
 
-OPTIONS:
-  -b  --best  percent 'best'            = 20
-  -d  --dump  on crash, print stackdump = false
-  -f  --file  csv file                  = ../data/auto93.csv
-  -g  --go    start-up action           = data
-  -h  --help  show help                 = false]]
+INFERENCE OPTIONS:
+  -b  --best   coefficient on 'best'      = .5
+  -B  --Bins   initial number of bins     = 16
+  -c  --cohen  Cohen's small effect test  = .35
+
+OTHER OPTIONS:
+  -d  --dump   on crash, print stack dump = false
+  -f  --file   csv file                   = ../data/auto93.csv
+  -g  --go     start-up action            = data
+  -h  --help   show help                  = false
+]]
+local csv,list,push,kap,sort,o,oo,obj,rnd = 
+         l.csv,               -- file tricks
+         l.list,l.push,l.kap, -- list tricks
+         l.sort,              -- sorting tricks
+         l.o,l.oo,            -- printing tricks
+         l.obj,               -- object tricks
+         l.rnd                -- random number tricks
 --------------------------------------------------------------------------------
 -- ## NUM
 local NUM = obj"NUM"
@@ -35,21 +45,28 @@ function NUM:add(x)
 
 function NUM:mid(x) return self.mu end
 function NUM:div(x) return self.sd end 
+function NUM:norm(x)
+  if x=="?" then return x end
+  return self.hi-self.lo < 1E-9 and 0 or (x-self.lo)/(self.hi - self.lo) end
+
+function NUM:discretize(n) --> num; discretize `Num`s,rounded to (hi-lo)/bins
+  local tmp = (self.hi - self.lo)/(the.Bins - 1)
+  return self.hi == self.lo and 1 or math.floor(n/tmp + .5)*tmp end 
 
 function NUM:merge(b4,min) 
-  local function fillInTheGaps(t)
+  local function fillInGaps(t)
     for j=2,#t do t[j-1].hi = t[j].lo end
     t[1 ].lo = -math.huge
     t[#t].hi =  math.huge
-    return t 
-  end ------
+    return #t==1 and {} or t 
+  end -------------
   local now,j = {},1
   while j <= #b4 do
     local xy1, xy2 = b4[j], b4[j+1]
     local merged   = xy2 and xy1:merge(xy2,min, the.cohen*self.sd)
     now[1+#now]    = merged or xy1
     j              = j + (merged and 2 or 1) end 
-  return #now < #b4 and self:merge(now,min) or fillInTheGaps(now) end 
+  return #now < #b4 and self:merge(now,min) or fillInGaps(now) end 
 --------------------------------------------------------------------------------
 -- ## SYM
 local SYM = obj"SYM"
@@ -72,28 +89,41 @@ function SYM:div(x)
   local function fun(p) return p*math.log(p,2) end
   local e=0; for _,n in pairs(self.has) do e = e - fun(n/self.n) end 
   return e end
+
+function SYM:score(goal,B,R)
+  for k,n in pairs(self.has) do
+    if k==goal then b=b+n/B else r=r+n/R end end
+  return b^2/(b+r) end
+
+function SYM:norm(x)       return x end
+function SYM:merge(x,...)  return x end
+function SYM:discretize(x) return x end
 --------------------------------------------------------------------------------
 --- ### XY
 local XY=obj"XY"
 function XY:new(n,s,lo,hi) 
   self.at, self.txt = n,s
-  self.lo=lo
-  self.hi=hi or lo 
-  self.y = SYM(n,s)end
+  self.lo = lo
+  self.hi = hi or lo 
+  self.y = SYM(n,s) 
+  self._rows={} end
 
-function XY:add(x,y)
+function XY:add(x,y,row)
   self.lo = math.min(x, self.lo)
   self.hi = math.max(x, self.hi) 
+  self._rows[row._id] = row
   self.y:add(y) end
 
 function XY:merge(xy,rare,small)
-  local a,b = self, xy
+  local a,b     = self, xy
   local isRare  = a.y.n <= rare or b.y.n <= rare
   local isSmall = a.hi - a.lo <= small or b.hi - b.lo <= small
   if isSmall or isRare then 
     local c   = XY(self.at, self.txt, a.lo, b.hi)
     for _,sym in pairs{self.y,xy.y} do
-      for k,n in pairs(sym.has) do c.y:add(k,n) end end
+      for k,n in pairs(sym.has) do c.y:add(k,n) end 
+    for _,rows in pairs{self._rows, xy._rows} do
+      for _,row in pairs(rows) do c._rows[row._id]=row end end end
     return c end end
 --------------------------------------------------------------------------------------------
 -- ## COLS
@@ -110,12 +140,6 @@ function COLS:add(row)
     for _,col in pairs(cols) do
       col:add(row[col.at]) end end 
   return row end
-
-local ROW=obj"ROW"
-function ROW:new(t) self.cells=t end
-
---function ROW:__lt(row)
-
 --------------------------------------------------------------------------------------------
 -- ## DATA
 local DATA = obj"DATA"
@@ -135,18 +159,50 @@ function DATA:stats(  fun,cols,places)
     t[col.txt] = type(v)=="number" and rnd(v,places) or v end
   return t end
 
+function DATA:sort(t1,t2)
+  local s1,s2,ys = 0,0,self.cols.y
+  for _,col in pairs(ys) do
+    local x = col:norm( t1[col.at] )
+    local y = col:norm( t2[col.at]  )
+    s1      = s1 - math.exp(col.w * (x-y)/#ys)
+    s2      = s2 - math.exp(col.w * (y-x)/#ys) end
+  return s1/#ys < s2/#ys end
 
+function DATA:sorts()
+  return sort(self.rows, function(t1,t2) return self:sort(t1,t2) end) end
+
+function DATA:xys()
+  local t,rows = {},self:sorts(rows)
+  local B      = (#self.rows)^the.best
+  local R      = #self.rows - B
+  local function col2xys(col,rows)
+    local t = {}
+    for n,row in pairs(rows) do
+      local x,k,y
+      y = n <= B
+      x = row[col.at]
+      if x ~= "?" then
+        k = col:discretize(x)
+        t[k] = t[k] or XY(col.at, col.txt, x)
+        t[k]:add(x, y, row) end end 
+    return col:merge(sort(list(t),lt"lo"), 
+                     #self.rows/the.bins, -- prune if under, say, 1/16th of the rows
+                     col.sd*the.cohen)    -- prune if under, say, 35% of std dev
+  end -------------------------------
+  for _,col in pairs(self.cols.x) do
+    for _,xy in col2xys(col,rows) do 
+      push(t, xy).score = xy.y:score(true,B,R) end end
+  return sort(t, gt"score") end
 --------------------------------------------------------------------------------------------
 -- ## Start-up
 local eg={}
 
 function eg.the() oo(the) end
 
-function eg.data() 
-  local d= DATA(the.file)
-  print("y mid     :  " .. o(d:stats("mid",nil,2))) 
-  print("y spread  :  " .. o(d:stats("div",nil,2))) 
-  print("x mid     :  " .. o(d:stats("mid", d.cols.x,2))) 
-  print("x spread  :  " .. o(d:stats("div", d.cols.x,2))) end
+function eg.sorts()
+  local d=DATA(the.file)
+  t = d:sorts()
+  oo(d.cols.names)
+  for i=1,#t,50 do print(o(t[i]),i) end end
 
 if l.required() then return {STATS=STATS} else l.main(the,eg) end 
