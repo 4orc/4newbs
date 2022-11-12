@@ -1,8 +1,6 @@
 #!/usr/bin/env lua
 local l = require"lib"
-local csv,kap,o,obj,oo = l.csv,l.kap,l.o,l.obj,l.oo
-local push,rnd = l.push, l.rnd
-local the = l.settings[[
+local the = l.settings[[   
 stats.lua : summarize a table
 (c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
 
@@ -12,7 +10,14 @@ OPTIONS:
   -d  --dump  on crash, print stackdump = false
   -f  --file  csv file                  = ../data/auto93.csv
   -g  --go    start-up action           = data
-  -h  --help  show help                 = false]]
+  -h  --help  show help                 = false
+]]
+local csv,push,kap,o,oo,obj,rnd = 
+         l.csv,        -- file tricks
+         l.push,l.kap, -- list tricks
+         l.o,l.oo,     -- printing tricks
+         l.obj,        -- object tricks
+         l.rnd         -- random number tricks
 --------------------------------------------------------------------------------
 -- ## NUM
 local NUM = obj"NUM"
