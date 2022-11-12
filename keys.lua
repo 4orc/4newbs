@@ -7,9 +7,10 @@ ranges.lua : report ranges that disguise best rows from rest
 USAGE:   ranges.lua  [OPTIONS]
 
 INFERENCE OPTIONS:
-  -b  --best   coefficient on 'best'      = .5
-  -B  --Bins   initial number of bins     = 16
-  -c  --cohen  Cohen's small effect test  = .35
+  -b  --best   coefficient on 'best'        = .5
+  -B  --Bins   initial number of bins       = 16
+  -c  --cohen  Cohen's small effect test    = .35
+  -r  --rest   explore rest* number of best = 4
 
 OTHER OPTIONS:
   -d  --dump   on crash, print stack dump = false
@@ -49,7 +50,7 @@ function NUM:norm(x)
   if x=="?" then return x end
   return self.hi-self.lo < 1E-9 and 0 or (x-self.lo)/(self.hi - self.lo) end
 
-function NUM:discretize(n) --> num; discretize `Num`s,rounded to (hi-lo)/bins
+function NUM:discretize(n) --> num; discretize `Num`s,rounded to (hi-lo)/Bins
   local tmp = (self.hi - self.lo)/(the.Bins - 1)
   return self.hi == self.lo and 1 or math.floor(n/tmp + .5)*tmp end 
 
@@ -171,28 +172,32 @@ function DATA:sort(t1,t2)
 function DATA:sorts()
   return sort(self.rows, function(t1,t2) return self:sort(t1,t2) end) end
 
+local _xys
 function DATA:xys()
-  local t,rows = {},self:sorts(rows)
-  local B      = (#self.rows)^the.best
-  local R      = #self.rows - B
-  local function col2xys(col,rows)
-    local t = {}
-    for n,row in pairs(rows) do
-      local x,k,y
-      y = n <= B
-      x = row[col.at]
-      if x ~= "?" then
-        k = col:discretize(x)
-        t[k] = t[k] or XY(col.at, col.txt, x)
-        t[k]:add(x, y, row) end end 
-    return col:merge(sort(list(t),lt"lo"), 
-                     #self.rows/the.bins, -- prune if under, say, 1/16th of the rows
-                     col.sd*the.cohen)    -- prune if under, say, 35% of std dev
-  end -------------------------------
+  local t    = {}
+  local rows = self:sorts(rows)
+  local B    = (#self.rows)^the.best -- the first B rows are great
+  local R    = #self.rows - B        -- the rest are not
   for _,col in pairs(self.cols.x) do
-    for _,xy in col2xys(col,rows) do 
+    for _,xy in _xys(col,rows, B, R) do
       push(t, xy).score = xy.y:score(true,B,R) end end
   return sort(t, gt"score") end
+
+function _xys(col,rows,B,R)
+  local function update(t,row,y,    x,k)
+    x = row[col.at]
+    if x ~= "?" then
+      k = col:discretize(x)
+      t[k] = t[k] or XY(col.at, col.txt, x)
+      t[k]:add(x, y, row) end 
+  end ----------------------- 
+  local t = {}
+  for i=1,B                        do update(t, rows[i//1], true)  end
+  for i=B+1, #rows, R/(the.rest*B) do update(t, rows[i//1], false) end
+  return col:merge(sort(list(t),lt"lo"), 
+                   #self.rows/the.Bins,  -- prune if under, say, 1/16th of the rows
+                   col.sd*the.cohen) end -- prune if under, say, 35% of std dev
+
 --------------------------------------------------------------------------------------------
 -- ## Start-up
 local eg={}
