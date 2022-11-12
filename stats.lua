@@ -77,8 +77,8 @@ function COLS:add(row)
 --------------------------------------------------------------------------------------------
 -- ## DATA
 local DATA = obj"DATA"
-function DATA:new(src)
-  self.cols,self.rows = nil,{}
+function DATA:new(src) --> DATA; `src` is either (a) a file name string or (b) list or rows
+  self.cols, self.rows = nil,{}
   if   type(src)=="string" 
   then csv(src,       function(row) self:add(row) end)
   else map(src or {}, function(row) self:add(row) end) end end

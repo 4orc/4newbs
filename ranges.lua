@@ -59,10 +59,11 @@ function SYM:new(n,s)
   self.has = {}
   self.most, self.mode = 0,nil end
 
-function SYM:add(x) 
+function SYM:add(x,inc) 
   if x ~= "?" then 
-   self.n = self.n + 1 
-   self.has[x] = 1 + (self.has[x] or 0)
+   inc = inc or 1
+   self.n = self.n + inc 
+   self.has[x] = inc + (self.has[x] or 0)
    if self.has[x] > self.most then
      self.most,self.mode = self.has[x], x end end end 
 
@@ -74,25 +75,25 @@ function SYM:div(x)
 --------------------------------------------------------------------------------
 --- ### XY
 local XY=obj"XY"
-function XY:new(at,txt,lo,hi) 
-  self.at, self.txt = at,txt
-  self.n = 0
+function XY:new(n,s,lo,hi) 
+  self.at, self.txt = n,s
   self.lo=lo
-  self.hi=hi or lo end
+  self.hi=hi or lo 
+  self.y = SYM(n,s)end
 
-function XY:add(x)
-  self.n  = self.n + 1
+function XY:add(x,y)
   self.lo = math.min(x, self.lo)
-  self.hi = math.max(x, self.hi) end
+  self.hi = math.max(x, self.hi) 
+  self.y:add(y) end
 
 function XY:merge(xy,rare,small)
   local a,b = self, xy
-  local isRare  = a.n< rare or b.n <= rare
+  local isRare  = a.y.n <= rare or b.y.n <= rare
   local isSmall = a.hi - a.lo <= small or b.hi - b.lo <= small
   if isSmall or isRare then 
     local c   = XY(self.at, self.txt, a.lo, b.hi)
-    c.p = a.p + b.p
-    c.n = a.n + b.n
+    for _,sym in pairs{self.y,xy.y} do
+      for k,n in pairs(sym.has) do c.y:add(k,n) end end
     return c end end
 --------------------------------------------------------------------------------------------
 -- ## COLS
