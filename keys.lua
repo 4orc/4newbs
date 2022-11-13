@@ -60,18 +60,12 @@ function NUM:merge(b4,min)
     for j=2,#t do t[j-1].hi = t[j].lo end
     t[1 ].lo = -math.huge
     t[#t].hi =  math.huge
-    print""
     return #t==1 and {} or t 
   end --------------
   local now,j = {},1
   while j <= #b4 do
     local xy1, xy2 = b4[j], b4[j+1]
-    print""
-    print(min)
-    print(xy1)
-    print(xy2)
     local merged   = xy2 and xy1:merge(xy2,min, the.cohen*self.sd)
-    print(merged and 1 or 0)
     now[1+#now]    = merged or xy1
     j              = j + (merged and 2 or 1) end 
   return #now < #b4 and self:merge(now,min) or fillInGaps(now) end 
@@ -124,22 +118,24 @@ function XY:add(x,y,row)
   self.y:add(y) end
 
 function XY:__tostring() --- print
-  local x,lo,hi,big = self.name, self.lo, self.hi, math.huge
-  if     lo ==  hi  then return fmt("%s == %s", x, lo)
-  elseif hi ==  big then return fmt("%s >  %s", x, lo)
-  elseif lo == -big then return fmt("%s <= %s", x, hi)
-  else                   return fmt("%s <  %s <= %s", lo,x,hi) end end
+  local x,lo,hi,big = self.txt, self.lo, self.hi, math.huge
+  local also=self.scored and fmt("[%.2f] ",self.scored) or ""
+  if     lo ==  hi  then return fmt("%s%s == %s", also,x, lo)
+  elseif hi ==  big then return fmt("%s%s >  %s", also,x, lo)
+  elseif lo == -big then return fmt("%s%s <= %s", also,x, hi)
+  else                   return fmt("%s%s <  %s <= %s", also,lo,x,hi) end end
 
 function XY:merge(xy,rare,small)
   local a,b     = self, xy
-  print("ay",a.y.n,"by",b.y.n,"small",small)
-  local isRare  = a.y.n <= rare or b.y.n <= rare
+  local c   = XY(self.at, self.txt, a.lo, b.hi)
+  for _,sym in pairs{self.y,xy.y} do
+    for k,n in pairs(sym.has) do c.y:add(k,n) end 
+  local da,db,dc = a.y:div(), b.y:div(), c.y:div()
+  local na,nb,nc = a.y.n, b.y.n, c.y.n
+  local isSimpler = da*na/nc + db*nb/nc <= dc
+  local isRare  = na <= rare or nb <= rare
   local isSmall = a.hi - a.lo <= small or b.hi - b.lo <= small
-  print("isSmall",isSmall, "isRare",isRare)
-  if isSmall or isRare then 
-    local c   = XY(self.at, self.txt, a.lo, b.hi)
-    for _,sym in pairs{self.y,xy.y} do
-      for k,n in pairs(sym.has) do c.y:add(k,n) end 
+  if isSimpler or isSmall or isRare then 
     for _,rows in pairs{self._rows, xy._rows} do
       for _,row in pairs(rows) do c._rows[row._id]=row end end end
     return c end end
@@ -203,11 +199,13 @@ function DATA:xys()
   local B    = (#self.rows)^the.best -- the first B rows are great
   local R    = B*the.rest
   for _,col in pairs(self.cols.x) do
-    for _,xy in pairs(self:_xys(col, rows, B, R)) do
-      oo(xy)
-      os.exit()
-      push(t, xy).scored = xy.y:score("best",B,R) end end
-  return sort(t, gt"score") end
+    local xys = self:_xys(col, rows, B, R)
+    for _,xy in pairs(xys) do
+        xy.scored = xy.y:score("best",B,R)
+        if xy.scored > 0.01 then  push(t,xy) end end end
+  t = sort(t,gt"scored")
+  map(t,print) 
+  return t end
 
 function DATA:_xys(col,rows,B,R)
   local function update(t,row,y,    x,k)
