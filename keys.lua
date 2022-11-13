@@ -9,7 +9,7 @@ USAGE:   keys.lua  [OPTIONS]
 INFERENCE OPTIONS:
   -b  --best   coefficient on 'best'        = .5
   -B  --Bins   initial number of bins       = 16
-  -c  --cohen  Cohen's small effect test    = .35
+  -c  --cohen  Cohen's small effect test    = .05
   -r  --rest   explore rest* number of best = 2
 
 OTHER OPTIONS:
@@ -55,7 +55,6 @@ function NUM:discretize(n) --> num; discretize `Num`s,rounded to (hi-lo)/Bins
   return self.hi == self.lo and 1 or math.floor(n/tmp + .5)*tmp end 
 
 function NUM:merge(b4,min) 
-  print(self.txt, "min",min,"sd",the.cohen*self.sd)
   local function fillInGaps(t)
     for j=2,#t do t[j-1].hi = t[j].lo end
     t[1 ].lo = -math.huge
@@ -185,12 +184,13 @@ function DATA:sorts()
 function DATA:xys()
   local t    = {}
   local rows = self:sorts(rows)
-  print("rows",#rows)
   local B    = (#self.rows)^the.best -- the first B rows are great
   local R    = B*the.rest
   for _,col in pairs(self.cols.x) do
     for _,xy in pairs(self:_xys(col, rows, B, R)) do
-      push(t, xy).score = xy.y:score("best",B,R) end end
+      oo(xy)
+      os.exit()
+      push(t, xy).scored = xy.y:score("best",B,R) end end
   return sort(t, gt"score") end
 
 function DATA:_xys(col,rows,B,R)
