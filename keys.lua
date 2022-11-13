@@ -9,7 +9,7 @@ USAGE:   keys.lua  [OPTIONS]
 INFERENCE OPTIONS:
   -b  --best   coefficient on 'best'        = .5
   -B  --Bins   initial number of bins       = 16
-  -c  --cohen  Cohen's small effect test    = .05
+  -c  --cohen  Cohen's small effect test    = .35
   -r  --rest   explore rest* number of best = 2
 
 OTHER OPTIONS:
@@ -18,7 +18,8 @@ OTHER OPTIONS:
   -g  --go     start-up action            = data
   -h  --help   show help                  = false
 ]]
-local csv,  list,map,push,kap,  lt,gt,sort,  o,oo,  obj,  rnd = 
+local fmt,  csv,  list,map,push,kap,  lt,gt,sort,  o,oo,  obj,  rnd = 
+        l.fmt,    -- string tricks
         l.csv,    -- file tricks
         l.list,l.map,l.push,l.kap, -- list tricks
         l.lt,l.gt,l.sort,          -- sorting tricks
@@ -59,12 +60,18 @@ function NUM:merge(b4,min)
     for j=2,#t do t[j-1].hi = t[j].lo end
     t[1 ].lo = -math.huge
     t[#t].hi =  math.huge
+    print""
     return #t==1 and {} or t 
-  end -------------
+  end --------------
   local now,j = {},1
   while j <= #b4 do
     local xy1, xy2 = b4[j], b4[j+1]
+    print""
+    print(min)
+    print(xy1)
+    print(xy2)
     local merged   = xy2 and xy1:merge(xy2,min, the.cohen*self.sd)
+    print(merged and 1 or 0)
     now[1+#now]    = merged or xy1
     j              = j + (merged and 2 or 1) end 
   return #now < #b4 and self:merge(now,min) or fillInGaps(now) end 
@@ -116,10 +123,19 @@ function XY:add(x,y,row)
   self._rows[row._id] = row
   self.y:add(y) end
 
+function XY:__tostring() --- print
+  local x,lo,hi,big = self.name, self.lo, self.hi, math.huge
+  if     lo ==  hi  then return fmt("%s == %s", x, lo)
+  elseif hi ==  big then return fmt("%s >  %s", x, lo)
+  elseif lo == -big then return fmt("%s <= %s", x, hi)
+  else                   return fmt("%s <  %s <= %s", lo,x,hi) end end
+
 function XY:merge(xy,rare,small)
   local a,b     = self, xy
+  print("ay",a.y.n,"by",b.y.n,"small",small)
   local isRare  = a.y.n <= rare or b.y.n <= rare
   local isSmall = a.hi - a.lo <= small or b.hi - b.lo <= small
+  print("isSmall",isSmall, "isRare",isRare)
   if isSmall or isRare then 
     local c   = XY(self.at, self.txt, a.lo, b.hi)
     for _,sym in pairs{self.y,xy.y} do
@@ -156,11 +172,11 @@ function DATA:new(src)
   else map(src or {}, function(row) self:add(row) end) end end
 
 function DATA:add(row) 
-  if   self.cols 
-  then push(self.rows, 
+  if   not self.cols 
+  then self.cols=COLS(row) 
+  else push(self.rows, 
               self.cols:add(
-                row.cells and row or ROW(row))) 
-  else self.cols = COLS(row) end end
+                row.cells and row or ROW(row))) end end 
 
 function DATA:stats(  fun,cols,places)
   local t={}
@@ -202,10 +218,10 @@ function DATA:_xys(col,rows,B,R)
       t[k]:add(x, y, row) end 
   end ----------------------- 
   local t = {}
-  for i=1,B                       do update(t, rows[i//1], "best")  end
-  for i=B+1, #rows, (#rows - B)/R do update(t, rows[i//1], "rest") end
+  for i=1,B                   do update(t, rows[i//1], "best") end
+  for i=B+1,#rows,(#rows-B)/R do update(t, rows[i//1], "rest") end
   return col:merge(sort(list(t),lt"lo"), 
-                   (#self.rows)/the.Bins) end -- prune if under, say, 1/16th of the rows
+                   (B+R)/the.Bins) end -- prune if under, say, 1/16th of the rows
 --------------------------------------------------------------------------------------------
 -- ## Start-up
 local eg={}
