@@ -132,7 +132,7 @@ function XY:merge(xy,rare,small)
     for k,n in pairs(sym.has) do c.y:add(k,n) end 
   local da,db,dc = a.y:div(), b.y:div(), c.y:div()
   local na,nb,nc = a.y.n, b.y.n, c.y.n
-  local isSimpler  = a*na/nc + db*nb/nc >= dc
+  local isSimpler  = da*na/nc + db*nb/nc >= dc
   local isRare  = na <= rare or nb <= rare
   local isSmall = a.hi - a.lo <= small or b.hi - b.lo <= small
   if isSimpler or isSmall or isRare then 
@@ -226,10 +226,10 @@ local eg={}
 
 function eg.the() oo(the) end
 
-function eg.div(    sym)
+function eg.sym(    sym)
   sym=SYM()
   for _,x in pairs{"a","a","a","a","b","b","c"} do sym:add(x) end
-  return sym:mid()=="a" and rnd(sym:div(),2) == 1.379 end
+  return "a"==sym:mid() and 1.379 == rnd(sym:div())end
 
 function eg.num(  num)
   num=NUM()
