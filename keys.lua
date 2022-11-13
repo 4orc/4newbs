@@ -13,7 +13,7 @@ INFERENCE OPTIONS:
   -r  --rest   explore rest* number of best = 2
 
 OTHER OPTIONS:
-  -d  --dump   on crash, print stack dump = false
+  -d  --dump   on crash, print stack dump = fals
   -f  --file   csv file                   = ../data/auto93.csv
   -g  --go     start-up action            = data
   -h  --help   show help                  = false
