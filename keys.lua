@@ -132,7 +132,7 @@ function XY:merge(xy,rare,small)
     for k,n in pairs(sym.has) do c.y:add(k,n) end 
   local da,db,dc = a.y:div(), b.y:div(), c.y:div()
   local na,nb,nc = a.y.n, b.y.n, c.y.n
-  local isSimpler = da*na/nc + db*nb/nc <= dc
+  local isSimpler  = a*na/nc + db*nb/nc >= dc
   local isRare  = na <= rare or nb <= rare
   local isSmall = a.hi - a.lo <= small or b.hi - b.lo <= small
   if isSimpler or isSmall or isRare then 
@@ -225,6 +225,16 @@ function DATA:_xys(col,rows,B,R)
 local eg={}
 
 function eg.the() oo(the) end
+
+function eg.div(    sym)
+  sym=SYM()
+  for _,x in pairs{"a","a","a","a","b","b","c"} do sym:add(x) end
+  return sym:mid()=="a" and rnd(sym:div(),2) == 1.379 end
+
+function eg.num(  num)
+  num=NUM()
+  for _,x in pairs{1,1,1,1,2,2,3} do num:add(x) end
+  return 11/7 == num:mid() and 0.787 == rnd(num:div()) end 
 
 function eg.sorts()
   local d = DATA(the.file)
