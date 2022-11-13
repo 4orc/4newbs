@@ -1,16 +1,16 @@
 #!/usr/bin/env lua
 local l = require"lib"
 local the = l.settings[[
-ranges.lua : report ranges that disguise best rows from rest
+keys.lua : report ranges that disguise best rows from rest
 (c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
 
-USAGE:   ranges.lua  [OPTIONS]
+USAGE:   keys.lua  [OPTIONS]
 
 INFERENCE OPTIONS:
   -b  --best   coefficient on 'best'        = .5
   -B  --Bins   initial number of bins       = 16
   -c  --cohen  Cohen's small effect test    = .35
-  -r  --rest   explore rest* number of best = 4
+  -r  --rest   explore rest* number of best = 2
 
 OTHER OPTIONS:
   -d  --dump   on crash, print stack dump = false
@@ -18,13 +18,13 @@ OTHER OPTIONS:
   -g  --go     start-up action            = data
   -h  --help   show help                  = false
 ]]
-local csv,list,push,kap,sort,o,oo,obj,rnd = 
-         l.csv,               -- file tricks
-         l.list,l.push,l.kap, -- list tricks
-         l.sort,              -- sorting tricks
-         l.o,l.oo,            -- printing tricks
-         l.obj,               -- object tricks
-         l.rnd                -- random number tricks
+local csv,  list,map,push,kap,  lt,gt,sort,  o,oo,  obj,  rnd = 
+        l.csv,    -- file tricks
+        l.list,l.map,l.push,l.kap, -- list tricks
+        l.lt,l.gt,l.sort,          -- sorting tricks
+        l.o,l.oo, -- printing tricks
+        l.obj,    -- object tricks
+        l.rnd     -- random number tricks
 --------------------------------------------------------------------------------
 -- ## NUM
 local NUM = obj"NUM"
@@ -55,6 +55,7 @@ function NUM:discretize(n) --> num; discretize `Num`s,rounded to (hi-lo)/Bins
   return self.hi == self.lo and 1 or math.floor(n/tmp + .5)*tmp end 
 
 function NUM:merge(b4,min) 
+  print(self.txt, "min",min,"sd",the.cohen*self.sd)
   local function fillInGaps(t)
     for j=2,#t do t[j-1].hi = t[j].lo end
     t[1 ].lo = -math.huge
@@ -92,12 +93,13 @@ function SYM:div(x)
   return e end
 
 function SYM:score(goal,B,R)
+  local b,r=0,0
   for k,n in pairs(self.has) do
     if k==goal then b=b+n/B else r=r+n/R end end
   return b^2/(b+r) end
 
 function SYM:norm(x)       return x end
-function SYM:merge(x,...)  return x end
+function SYM:merge(t,...)  return t end
 function SYM:discretize(x) return x end
 --------------------------------------------------------------------------------
 --- ### XY
@@ -127,6 +129,10 @@ function XY:merge(xy,rare,small)
       for _,row in pairs(rows) do c._rows[row._id]=row end end end
     return c end end
 --------------------------------------------------------------------------------------------
+-- ## ROW
+local ROW = obj"ROW"
+function ROW:new(t) self.cells=t end
+--------------------------------------------------------------------------------------------
 -- ## COLS
 local COLS = obj"COLS"
 function COLS:new(t)
@@ -139,7 +145,7 @@ function COLS:new(t)
 function COLS:add(row)
   for _,cols in pairs{self.x, self.y} do
     for _,col in pairs(cols) do
-      col:add(row[col.at]) end end 
+      col:add(row.cells[col.at]) end end 
   return row end
 --------------------------------------------------------------------------------------------
 -- ## DATA
@@ -151,7 +157,11 @@ function DATA:new(src)
   else map(src or {}, function(row) self:add(row) end) end end
 
 function DATA:add(row) 
-  if self.cols then push(self.rows, self.cols:add(row)) else self.cols = COLS(row) end end
+  if   self.cols 
+  then push(self.rows, 
+              self.cols:add(
+                row.cells and row or ROW(row))) 
+  else self.cols = COLS(row) end end
 
 function DATA:stats(  fun,cols,places)
   local t={}
@@ -163,8 +173,8 @@ function DATA:stats(  fun,cols,places)
 function DATA:sort(t1,t2)
   local s1,s2,ys = 0,0,self.cols.y
   for _,col in pairs(ys) do
-    local x = col:norm( t1[col.at] )
-    local y = col:norm( t2[col.at]  )
+    local x = col:norm( t1.cells[col.at] )
+    local y = col:norm( t2.cells[col.at]  )
     s1      = s1 - math.exp(col.w * (x-y)/#ys)
     s2      = s2 - math.exp(col.w * (y-x)/#ys) end
   return s1/#ys < s2/#ys end
@@ -172,32 +182,30 @@ function DATA:sort(t1,t2)
 function DATA:sorts()
   return sort(self.rows, function(t1,t2) return self:sort(t1,t2) end) end
 
-local _xys
 function DATA:xys()
   local t    = {}
   local rows = self:sorts(rows)
+  print("rows",#rows)
   local B    = (#self.rows)^the.best -- the first B rows are great
-  local R    = #self.rows - B        -- the rest are not
+  local R    = B*the.rest
   for _,col in pairs(self.cols.x) do
-    for _,xy in _xys(col,rows, B, R) do
-      push(t, xy).score = xy.y:score(true,B,R) end end
+    for _,xy in pairs(self:_xys(col, rows, B, R)) do
+      push(t, xy).score = xy.y:score("best",B,R) end end
   return sort(t, gt"score") end
 
-function _xys(col,rows,B,R)
+function DATA:_xys(col,rows,B,R)
   local function update(t,row,y,    x,k)
-    x = row[col.at]
+    x = row.cells[col.at]
     if x ~= "?" then
       k = col:discretize(x)
       t[k] = t[k] or XY(col.at, col.txt, x)
       t[k]:add(x, y, row) end 
   end ----------------------- 
   local t = {}
-  for i=1,B                        do update(t, rows[i//1], true)  end
-  for i=B+1, #rows, R/(the.rest*B) do update(t, rows[i//1], false) end
+  for i=1,B                       do update(t, rows[i//1], "best")  end
+  for i=B+1, #rows, (#rows - B)/R do update(t, rows[i//1], "rest") end
   return col:merge(sort(list(t),lt"lo"), 
-                   #self.rows/the.Bins,  -- prune if under, say, 1/16th of the rows
-                   col.sd*the.cohen) end -- prune if under, say, 35% of std dev
-
+                   (#self.rows)/the.Bins) end -- prune if under, say, 1/16th of the rows
 --------------------------------------------------------------------------------------------
 -- ## Start-up
 local eg={}
@@ -205,9 +213,13 @@ local eg={}
 function eg.the() oo(the) end
 
 function eg.sorts()
-  local d=DATA(the.file)
+  local d = DATA(the.file)
   t = d:sorts()
   oo(d.cols.names)
   for i=1,#t,50 do print(o(t[i]),i) end end
+
+function eg.xys()
+  local d = DATA(the.file)
+  d:xys() end
 
 if l.required() then return {STATS=STATS} else l.main(the,eg) end 
