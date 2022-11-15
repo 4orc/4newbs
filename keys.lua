@@ -60,7 +60,7 @@ function NUM:merge(b4,min)
     for j=2,#t do t[j-1].hi = t[j].lo end
     t[1 ].lo = -math.huge
     t[#t].hi =  math.huge
-    return #t==1 and {} or t 
+    return t 
   end --------------
   local now,j = {},1
   while j <= #b4 do
@@ -128,16 +128,16 @@ function XY:__tostring() --- print
 function XY:merge(xy,rare,small)
   local a,b     = self, xy
   local c   = XY(self.at, self.txt, a.lo, b.hi)
-  for _,sym in pairs{self.y,xy.y} do
-    for k,n in pairs(sym.has) do c.y:add(k,n) end 
+  for k,n in pairs(a.y.has) do c.y:add(k,n) end 
+  for k,n in pairs(b.y.has) do c.y:add(k,n) end 
   local da,db,dc = a.y:div(), b.y:div(), c.y:div()
   local na,nb,nc = a.y.n, b.y.n, c.y.n
   local isSimpler  = da*na/nc + db*nb/nc >= dc
   local isRare  = na <= rare or nb <= rare
-  local isSmall = a.hi - a.lo <= small or b.hi - b.lo <= small
+  local isSmall  = a.hi - a.lo <= small or b.hi - b.lo <= small
   if isSimpler or isSmall or isRare then 
     for _,rows in pairs{self._rows, xy._rows} do
-      for _,row in pairs(rows) do c._rows[row._id]=row end end end
+      for _,row in pairs(rows) do c._rows[row._id]=row end end 
     return c end end
 --------------------------------------------------------------------------------------------
 -- ## ROW
@@ -200,11 +200,12 @@ function DATA:xys()
   local R    = B*the.rest
   for _,col in pairs(self.cols.x) do
     local xys = self:_xys(col, rows, B, R)
+    print""
+    map(xys,print)
     for _,xy in pairs(xys) do
         xy.scored = xy.y:score("best",B,R)
-        if xy.scored > 0.01 then  push(t,xy) end end end
+        if xy.scored > 0.01 then push(t,xy) end end end
   t = sort(t,gt"scored")
-  map(t,print) 
   return t end
 
 function DATA:_xys(col,rows,B,R)
@@ -216,8 +217,9 @@ function DATA:_xys(col,rows,B,R)
       t[k]:add(x, y, row) end 
   end ----------------------- 
   local t = {}
+  local n=0
   for i=1,B                   do update(t, rows[i//1], "best") end
-  for i=B+1,#rows,(#rows-B)/R do update(t, rows[i//1], "rest") end
+  for i=B+1,#rows,(#rows-B)/R do n=n+1; update(t, rows[i//1], "rest") end
   return col:merge(sort(list(t),lt"lo"), 
                    (B+R)/the.Bins) end -- prune if under, say, 1/16th of the rows
 --------------------------------------------------------------------------------------------
