@@ -60,7 +60,7 @@ function NUM:merge(b4,min)
     for j=2,#t do t[j-1].hi = t[j].lo end
     t[1 ].lo = -math.huge
     t[#t].hi =  math.huge
-    return t 
+    return #t==1 and {} or t 
   end --------------
   local now,j = {},1
   while j <= #b4 do
@@ -206,6 +206,8 @@ function DATA:xys()
         xy.scored = xy.y:score("best",B,R)
         if xy.scored > 0.01 then push(t,xy) end end end
   t = sort(t,gt"scored")
+  print""
+  map(t, print)
   return t end
 
 function DATA:_xys(col,rows,B,R)

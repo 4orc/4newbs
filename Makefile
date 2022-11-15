@@ -25,3 +25,11 @@ README.md: ../4readme/readme.lua ruler.lua ## update readme
 	ps2pdf $@.ps $@; rm $@.ps
 	open $@
 
+
+D=nasa93dem auto2 auto93 china coc1000 healthCloseIsses12mths0001-hard \
+	healthCloseIsses12mths0011-easy pom SSN SSM
+
+xys:
+	$(foreach f,$D,printf "\n\n----[$f]-------------------\n"; \
+		             lua keys.lua -f ../data/$f.csv -g xys;)
+
