@@ -1,16 +1,19 @@
 #!/usr/bin/env lua
----       __   
----     /'__`\   
----    /\ \L\.\_  
----    \ \__/.\_\ 
----     \/__/\/_/ 
-
+---       _        __        _     
+---     /' \     /'__`\    /' \    
+---    /\_, \   /\ \/\ \  /\_, \   
+---    \/_/\ \  \ \ \ \ \ \/_/\ \  
+---       \ \ \  \ \ \_\ \   \ \ \ 
+---        \ \_\  \ \____/    \ \_\
+---         \/_/   \/___/      \/_/
+---                                
+                            
 local lib = require"lib"
 local the = lib.settings[[   
-a.lua : an example script with help text and a test suite
+101.lua : an example script with help text and a test suite
 (c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
 
-USAGE:   a.lua  [OPTIONS]
+USAGE:   101.lua  [OPTIONS]
 
 OPTIONS:
   -d  --dump  on crash, dump stack = false
