@@ -146,12 +146,12 @@ function l.cli(options) --> t; update key,vals in `t` from command-line flags
 
 function l.run1(options,fun) -->x; reset seed; call `fun`; afterwards, reset config
   local was=l.copy(options)
-  math.randomseed(options.seed or 10019)
+  math.randomseed(options.seed or 937162211)
   local status, result
   if options.dump then 
     status,result=true, fun() 
   else
-    status,result=pcall(fun) -- do not crash and dump on errror
+    status,result=pcall(fun) -- do not crash and dump on error
   end
   for k,v in pairs(was) do options[k]=v end -- undo any changes to the config
   if not status then return false else return result end end
@@ -161,9 +161,9 @@ function l.runs(options,funs)
   for _,k in pairs(l.keys(funs)) do              
     if options.go == "all" or options.go==k then 
       if   l.run1(options, funs[k]) == false      
-      then print(l.fmt("FAIL ❌ %s",k))
+      then print(l.fmt("FAIL ❌ on [%s]",k))
            fails = fails + 1                 
-      else print(l.fmt("PASS ✅ %s",k)) end end end 
+      else print(l.fmt("PASS ✅ on [%s]",k)) end end end 
   return fails end
 
 function l.main(options,funs)
