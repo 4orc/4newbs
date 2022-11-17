@@ -1,4 +1,5 @@
 <img align=right width=400 src='about.jpg'>
+
 ## NUM	
 Summarizes a stream of numbers	
 
