@@ -1,4 +1,7 @@
-<img align=right width=400 src='about.jpg'>
+
+# ../4readme/readme.lua
+
+<img align=right width=400 src='about.jpg'><br clear=all>
 
 ## NUM	
 Summarizes a stream of numbers	
