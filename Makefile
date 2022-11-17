@@ -1,12 +1,11 @@
-## 
-## <img align=right width=400 src='etc/img/about.jpg'>
-## 
-## # About.lua
-##
-## Extract stats from csv file (assumes row1 has column names).
-##
-
 -include ../etc/Makefile
+
+101.md: ../4readme/readme.lua 101.lua 101.txt ## update readme
+	printf "\n<img align=right width=300 src='etc/img/begin.jpg'>\n\n" > $@
+	printf "\n# 101.lua\n\nBasic example of script idioms (test suites, help text).\n\n" >> $@
+	(printf "\n\`\`\`css\n"; lua $(word 2,$^) -h ; printf "\`\`\`\n") >> $@
+	lua $< $(word 2,$^) >> $@
+	cat 101.txt >> $@
 
 about.md: ../4readme/readme.lua about.lua ## update readme
 	gawk 'sub(/^## /,"")' Makefile > $@

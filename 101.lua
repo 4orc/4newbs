@@ -62,7 +62,7 @@ function NUM:add(n) --> NUM; add `n`, update min,max,standard deviation
 function NUM:mid(x) return self.mu end --> n; return mean
 function NUM:div(x) return self.sd end --> n; return standard deviation
 --------------------------------------------------------------------------------------------
--- ## Start-up
+--- ## Start-up
 local eg={}
 
 function eg.crash()        return the.some.missing.nested.field end 
