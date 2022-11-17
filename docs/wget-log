@@ -1,0 +1,11 @@
+--2022-11-17 00:49:36--  https://www.google.com/url?sa=i
+Resolving www.google.com (www.google.com)... 2607:f8b0:4004:c08::63, 2607:f8b0:4004:c08::67, 2607:f8b0:4004:c08::68, ...
+Connecting to www.google.com (www.google.com)|2607:f8b0:4004:c08::63|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [text/html]
+Saving to: ‘about.png’
+
+about.png                 [<=>                    ]       0  --.-KB/s               about.png                 [ <=>                   ]   1.38K  --.-KB/s    in 0s      
+
+2022-11-17 00:49:36 (15.2 MB/s) - ‘about.png’ saved [1415]
+

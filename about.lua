@@ -1,10 +1,18 @@
 #!/usr/bin/env lua
+---               __                          __      
+---              /\ \                        /\ \__   
+---       __     \ \ \____    ___    __  __  \ \ ,_\  
+---     /'__`\    \ \ '__`\  / __`\ /\ \/\ \  \ \ \/  
+---    /\ \L\.\_   \ \ \L\ \/\ \L\ \\ \ \_\ \  \ \ \_ 
+---    \ \__/.\_\   \ \_,__/\ \____/ \ \____/   \ \__\
+---     \/__/\/_/    \/___/  \/___/   \/___/     \/__/
+
 local l = require"lib"
 local the = l.settings[[   
-stats.lua : summarize a table
+about.lua : summarize a table
 (c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
 
-USAGE:   stats.lua  [OPTIONS]
+USAGE:   about.lua  [OPTIONS]
 
 OPTIONS:
   -d  --dump  on crash, print stackdump = false
@@ -20,24 +28,25 @@ local csv,push,kap,o,oo,obj,rnd =
          l.rnd         -- random number tricks
 --------------------------------------------------------------------------------
 -- ## NUM
+-- Summarizes a stream of numbers
 local NUM = obj"NUM"
-function NUM:new(n,s) 
+function NUM:new(  n,s) --> NUM;  constructor; optionally for column `n` named `s` 
   self.at, self.txt  = n or 0, s or ""
   self.n, self.mu, self.m2 = 0, 0, 0
   self.lo, self.hi = math.huge, -math.huge end
 
-function NUM:add(x)
-  if x ~= "?" then
+function NUM:add(n) --> NUM; add `n`, update min,max,standard deviation
+  if n ~= "?" then
     self.n  = self.n + 1
-    local d = x - self.mu
+    local d = n - self.mu
     self.mu = self.mu + d/self.n
-    self.m2 = self.m2 + d*(x - self.mu)
+    self.m2 = self.m2 + d*(n - self.mu)
     self.sd = (self.m2 <0 or self.n < 2) and 0 or (self.m2/(self.n-1))^0.5 
-    self.lo = math.min(x, self.lo)
-    self.hi = math.max(x, self.hi) end end
+    self.lo = math.min(n, self.lo)
+    self.hi = math.max(n, self.hi) end end
 
-function NUM:mid(x) return self.mu end
-function NUM:div(x) return self.sd end 
+function NUM:mid(x) return self.mu end --> n; return mean
+function NUM:div(x) return self.sd end --> n; return standard deviation
 --------------------------------------------------------------------------------
 -- ## SYM
 local SYM = obj"SYM"

@@ -1,8 +1,8 @@
 -include ../etc/Makefile
 
-README.md: ../4readme/readme.lua ruler.lua ## update readme
-	printf "\n<img src='img/ruler.jpg' width=200 align=right>\n\n" > README.md
-	lua $< ruler.lua >> README.md
+docs/about.md: ../4readme/readme.lua about.lua ## update readme
+	echo "<img align=right width=400 src='about.jpg'>" > $@
+	lua $< about.lua >> $@
 
 # changes to 3 cols and 101 chars/line
 ~/tmp/%.pdf: %.lua  ## .lua ==> .pdf

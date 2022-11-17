@@ -1,10 +1,17 @@
 #!/usr/bin/env lua
+---                                     __                    
+---     ___     ___     ___      ___   /\_\     ____     __   
+---    /'___\  / __`\ /' _ `\   /'___\ \/\ \   /',__\  /'__`\ 
+---   /\ \__/ /\ \L\ \/\ \/\ \ /\ \__/  \ \ \ /\__, `\/\  __/ 
+---   \ \____\\ \____/\ \_\ \_\\ \____\  \ \_\\/\____/\ \____\
+---    \/____/ \/___/  \/_/\/_/ \/____/   \/_/ \/___/  \/____/
+                                   
 local l = require"lib"
 local the = l.settings[[
-keys.lua : report ranges that disguise best rows from rest
+consise.lua : report ranges that distinguish best rows from rest
 (c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
 
-USAGE:   keys.lua  [OPTIONS]
+USAGE:   concise.lua  [OPTIONS]
 
 INFERENCE OPTIONS:
   -b  --best   coefficient on 'best'        = .5
@@ -65,7 +72,7 @@ function NUM:merge(b4,min)
   local now,j = {},1
   while j <= #b4 do
     local xy1, xy2 = b4[j], b4[j+1]
-    local merged   = xy2 and xy1:merge(xy2,min, the.cohen*self.sd)
+    local merged   = xy2 and xy1:merged(xy2,min, the.cohen*self.sd)
     now[1+#now]    = merged or xy1
     j              = j + (merged and 2 or 1) end 
   return #now < #b4 and self:merge(now,min) or fillInGaps(now) end 
@@ -125,21 +132,23 @@ function XY:__tostring() --- print
   elseif lo == -big then return fmt("%s%s <= %s", also,x, hi)
   else                   return fmt("%s%s <  %s <= %s", also,lo,x,hi) end end
 
-function XY:merge(xy,rare,small)
-  local a,b     = self, xy
-  local c   = XY(self.at, self.txt, a.lo, b.hi)
+function XY:merge(xy)
+  local a,b = self, xy
+  local c   = XY(a.at, a.txt, a.lo, b.hi)
   for k,n in pairs(a.y.has) do c.y:add(k,n) end 
   for k,n in pairs(b.y.has) do c.y:add(k,n) end 
-  local da,db,dc = a.y:div(), b.y:div(), c.y:div()
+  for _,rows in pairs{a._rows, b._rows} do
+    for _,row in pairs(rows) do c._rows[row._id]=row end end 
+  return c end
+
+function XY:merged(xy,rare,small)
+  local a,b,c    = self,xy, self:merge(xy)
   local na,nb,nc = a.y.n, b.y.n, c.y.n
-  local isSimpler  = da*na/nc + db*nb/nc >= dc
-  local isRare  = na <= rare or nb <= rare
-  local isSmall  = a.hi - a.lo <= small or b.hi - b.lo <= small
-  if isSimpler or isSmall or isRare then 
-    for _,rows in pairs{self._rows, xy._rows} do
-      for _,row in pairs(rows) do c._rows[row._id]=row end end 
-    return c end end
---------------------------------------------------------------------------------------------
+  if (a.y:div()*na + b.y:div()*nb)/nc >= c.y:div() or
+     na <= rare or nb <= rare or
+     a.hi - a.lo <= small or b.hi - b.lo <= small then
+     return c end end
+--------------------------------------------------------------------------------------------
 -- ## ROW
 local ROW = obj"ROW"
 function ROW:new(t) self.cells=t end
