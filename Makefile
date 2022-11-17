@@ -1,7 +1,16 @@
+## 
+## <img align=right width=400 src='img/about.jpg'>
+## 
+## # About.lua
+##
+## Extract stats from csv file (assumes row1 has column names).
+##
+
 -include ../etc/Makefile
 
 docs/about.md: ../4readme/readme.lua about.lua ## update readme
-	printf "\n# $<\n\n<img align=right width=400 src='about.jpg'><br clear=all>\n\n" > $@
+	gawk 'sub(/^## /,"")' $R/4th/Makefile > $@
+	(printf "\n\`\`\`css\n"; lua about.lua -h ; printf "\`\`\`\n") >> $@
 	lua $< about.lua >> $@
 
 # changes to 3 cols and 101 chars/line

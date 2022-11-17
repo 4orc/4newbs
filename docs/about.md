@@ -1,8 +1,23 @@
 
-# ../4readme/readme.lua
+<img align=right width=400 src='img/about.jpg'>
 
-<img align=right width=400 src='about.jpg'><br clear=all>
+# About.lua
+Extract stats from csv file (assumes row1 has column names).
 
+```css
+
+about.lua : summarize a table
+(c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
+
+USAGE:   about.lua  [OPTIONS]
+
+OPTIONS:
+  -d  --dump  on crash, print stackdump = false
+  -f  --file  csv file                  = ../data/auto93.csv
+  -g  --go    start-up action           = data
+  -h  --help  show help                 = false
+
+```
 ## NUM	
 Summarizes a stream of numbers	
 
