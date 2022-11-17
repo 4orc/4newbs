@@ -1,7 +1,7 @@
 -include ../etc/Makefile
 
 docs/about.md: ../4readme/readme.lua about.lua ## update readme
-	printf "<img align=right width=400 src='about.jpg'>\n\n" > $@
+	printf "\n# $<\n\n<img align=right width=400 src='about.jpg'><br clear=all>\n\n" > $@
 	lua $< about.lua >> $@
 
 # changes to 3 cols and 101 chars/line
