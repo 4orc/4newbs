@@ -1,5 +1,5 @@
 ## 
-## <img align=right width=400 src='img/about.jpg'>
+## <img align=right width=400 src='etc/img/about.jpg'>
 ## 
 ## # About.lua
 ##
@@ -8,8 +8,8 @@
 
 -include ../etc/Makefile
 
-docs/about.md: ../4readme/readme.lua about.lua ## update readme
-	gawk 'sub(/^## /,"")' $R/4th/Makefile > $@
+about.md: ../4readme/readme.lua about.lua ## update readme
+	gawk 'sub(/^## /,"")' Makefile > $@
 	(printf "\n\`\`\`css\n"; lua about.lua -h ; printf "\`\`\`\n") >> $@
 	lua $< about.lua >> $@
 
