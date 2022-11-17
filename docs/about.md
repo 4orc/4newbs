@@ -3,21 +3,19 @@
 ## NUM	
 Summarizes a stream of numbers	
 
-| What | Notes |
-|:---|:---|
-| <tt>NUM:new(  n:`num`?, s:`str`?) &rArr;  NUM</tt> |   constructor; optionally for column `n` named `s`  |
-| <tt>NUM:add(n:`num`) &rArr;  NUM</tt> |  add `n`, update min,max,standard deviation |
-| <tt>NUM:mid(x) &rArr;  n</tt> |  return mean |
-| <tt>NUM:div(x) &rArr;  n</tt> |  return standard deviation |
-
+<dl>
+<dt><b> NUM:new(  n:num?, s:str?) &rArr;  NUM </b></dt><dd>   constructor; optionally for column `n` named `s`  </dd>
+<dt><b> NUM:add(n:num) &rArr;  NUM </b></dt><dd>  add `n`, update min,max,standard deviation </dd>
+<dt><b> NUM:mid(x) &rArr;  n </b></dt><dd>  return mean </dd>
+<dt><b> NUM:div(x) &rArr;  n </b></dt><dd>  return standard deviation </dd>
+</dl>
 
 ## SYM	
 ## COLS	
 ## DATA	
 
-| What | Notes |
-|:---|:---|
-| <tt>DATA:new(src:`str`) &rArr;  DATA</tt> |  `src` is either (a) a file name string or (b) list or rows |
-
+<dl>
+<dt><b> DATA:new(src:str) &rArr;  DATA </b></dt><dd>  `src` is either (a) a file name string or (b) list or rows </dd>
+</dl>
 
 ## Start-up	
