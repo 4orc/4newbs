@@ -33,7 +33,7 @@ about.md: ../4readme/readme.lua about.lua ## update readme
 		--footer=""                    \
 		--right-footer=""               \
 	  -o	 $@.ps $<
-	ps2pdf $@.ps $@; rm $@.ps
+	ps2pdf $@.ps $@; rm $@.ps    
 	open $@
 
 
