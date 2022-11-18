@@ -1,5 +1,8 @@
 -include ../etc/Makefile
 
+about:
+	echo "lua 101"
+	
 101.md: ../4readme/readme.lua 101.lua 101.txt ## update readme
 	printf "\n<img align=right width=300 src='etc/img/begin.jpg'>\n\n" > $@
 	printf "\n# 101.lua\n\nBasic example of script idioms (test suites, help text).\n\n" >> $@
