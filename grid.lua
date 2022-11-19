@@ -24,7 +24,8 @@ OPTIONS:
   -p  --p     distance coefficient = 2
   -s  --seed  random number seed   = 937162211
 ]]
-local fmt,oo,map =
+local obj,fmt,oo,map =
+        lib.obj,        -- object tricks
         lib.fmt,lib.oo, -- string tricks
         lib.map         -- less strings
 -----------------------------------------------------------------------------------------
