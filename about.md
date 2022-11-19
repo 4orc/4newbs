@@ -1,9 +1,4 @@
 
-<img align=right width=400 src='etc/img/about.jpg'>
-
-# About.lua
-Extract stats from csv file (assumes row1 has column names).
-
 ```css
 
 about.lua : summarize a table
@@ -21,19 +16,33 @@ OPTIONS:
 ## NUM	
 Summarizes a stream of numbers	
 
-<dl>
-<dt><b> NUM:new(  n:num?, s:str?) &rArr;  NUM </b></dt><dd>   constructor; optionally for column `n` named `s`  </dd>
-<dt><b> NUM:add(n:num) &rArr;  NUM </b></dt><dd>  add `n`, update min,max,standard deviation </dd>
-<dt><b> NUM:mid(x) &rArr;  n </b></dt><dd>  return mean </dd>
-<dt><b> NUM:div(x) &rArr;  n </b></dt><dd>  return standard deviation </dd>
-</dl>
+
+
+  
+**_NUM:new(  n:<tt>num</tt>?, s:<tt>str</tt>?) &rArr;  NUM_**  
+&nbsp;&nbsp;&nbsp;&nbsp;  constructor; optionally for column `n` named `s`     
+  
+**_NUM:add(n:<tt>num</tt>) &rArr;  NUM_**  
+&nbsp;&nbsp;&nbsp;&nbsp; add `n`, update min,max,standard deviation    
+  
+**_NUM:mid(x) &rArr;  n_**  
+&nbsp;&nbsp;&nbsp;&nbsp; return mean    
+  
+**_NUM:div(x) &rArr;  n_**  
+&nbsp;&nbsp;&nbsp;&nbsp; return standard deviation    
+
+
 
 ## SYM	
 ## COLS	
 ## DATA	
 
-<dl>
-<dt><b> DATA:new(src:str) &rArr;  DATA </b></dt><dd>  `src` is either (a) a file name string or (b) list or rows </dd>
-</dl>
+
+
+  
+**_DATA:new(src:<tt>str</tt>) &rArr;  DATA_**  
+&nbsp;&nbsp;&nbsp;&nbsp; `src` is either (a) a file name string or (b) list or rows    
+
+
 
 ## Start-up	

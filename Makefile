@@ -2,15 +2,24 @@
 
 about:
 	echo "lua 101"
-	
-101.md: ../4readme/readme.lua 101.lua 101.txt ## update readme
+
+mds: lib.md 101.md about.md ## update all mds
+
+lib.md: ../4readme/readme.lua lib.lua  ## update lib.md
+	echo "# $@"
+	printf "\n# $(word 2,$^)\n\nMisc tricks.\n\n" > $@
+	lua $< $(word 2,$^) >> $@
+
+101.md: ../4readme/readme.lua 101.lua 101.txt ## update 101.md
+	echo "# $@"
 	printf "\n<img align=right width=300 src='etc/img/begin.jpg'>\n\n" > $@
 	printf "\n# 101.lua\n\nBasic example of script idioms (test suites, help text).\n\n" >> $@
 	(printf "\n\`\`\`css\n"; lua $(word 2,$^) -h ; printf "\`\`\`\n") >> $@
 	lua $< $(word 2,$^) >> $@
 	cat 101.txt >> $@
 
-about.md: ../4readme/readme.lua about.lua ## update readme
+about.md: ../4readme/readme.lua about.lua ## update about.md
+	echo "# $@"
 	gawk 'sub(/^## /,"")' Makefile > $@
 	(printf "\n\`\`\`css\n"; lua about.lua -h ; printf "\`\`\`\n") >> $@
 	lua $< about.lua >> $@

@@ -1,4 +1,4 @@
--- Some general LUA functions.    
+-- Some general LUA tricks.    
 -- (c)2022 Tim Menzies <timm@ieee.org> BSD-2 license
 local l={}
 -----------------------------------------------------------------------------------------
@@ -49,6 +49,9 @@ function l.any(t) --> any; return any item from `t`, picked at random
 
 function l.many(t,n) --> t; return `n` items from `t`, picked at random
   local u={}; for i=1,n do l.push(u, l.any(t)) end; return u end 
+
+function l.shuffle(t,   j) --> t;  Randomly shuffle, in place, the list `t`.
+  for i=#t,2,-1 do j=math.random(i); t[i],t[j]=t[j],t[i] end; return t end
 
 function l.copy(t) --> t; return a deep copy of `t.
   if type(t) ~= "table" then return t end
@@ -176,5 +179,4 @@ function l.main(options,funs)
 
 function l.required() return pcall(debug.getlocal,5,1) end
 --------------------
--- That's all folks.
 return l
