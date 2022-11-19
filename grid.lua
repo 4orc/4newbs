@@ -23,9 +23,36 @@ OPTIONS:
   -h  --help  show help            = false
   -s  --seed  random number seed   = 937162211
 ]]
+local fmt =
+       lib.fmt -- string tricks
 -----------------------------------------------------------------------------------------
 local function(file)
-  t=dofile(file) end
+  t=ok(dofile(file))
+  
+  m={}
+  cols=#t.rows[1]
+  for r,row in pairs(t.rows) do 
+    assert(#row=ncols,"rows wrong width"
+    m[r]={}
+    for c=2,#row-1 do 
+      x = row[c]
+      assert(x//1 == x,             fmt("[%s] not an int",x)
+      assert(x<=t.hi and x >= t.lo, fmt("[%s] out of range") and m[r][c-1] = x end end end 
+
+local function ok(t)
+  local want={rows={},hi=1,lo=1,cols={},domain="string"}
+  for key,eg in pairs(want) do
+    assert(t[key],                   fmt("[%s] missing",key))
+    assert(type(t[key]) == type(eg), fmt("[%s] not of type [%s]", t[key], type(eg))) end 
+  for r,row in pairs(t.rows) do 
+    assert(#row==#t.rows[1],            fmt("row [%s] does not have [%s] cells",r,#t.rows[1])) 
+    assert(type(row[1]) == "string",    fmt("row [%s] does not have a LHS name",r))
+    assert(type(row[#row]) == "string", fmt("row [%s] does not have a RBS name",r)) end
+  for c=2,#row-1 do 
+    x = row[c]
+    assert(x//1 == x,             fmt("[%s] not an int",x))
+    assert(x >= t.lo and x<=t.hi, fmt("[%s] out of range")) end end 
+  return t end
 --------------------------------------------------------------------------------------------
 --- ## Start-up
 local eg={}
