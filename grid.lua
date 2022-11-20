@@ -25,9 +25,9 @@ OPTIONS:
   -p  --p     distance coefficient       = 2
   -s  --seed  random number seed         = 937162211
 ]]
-local obj,fmt,oo,map,shuffle,lt,gt,sort,push,slice  =
+local obj,fmt,o,oo,map,shuffle,lt,gt,sort,push,slice  =
         lib.obj,            -- object tricks
-        lib.fmt, lib.oo,     -- string tricks
+        lib.fmt, lib.o, lib.oo,     -- string tricks
         lib.map, lib.shuffle, lib.lt, lib.gt, lib.sort, -- less strings
         lib.push, lib.slice  -- list tricks
 -----------------------------------------------------------------------------------------
@@ -52,30 +52,33 @@ function furthest(rows)
   for i = 1,#rows do
     for j = i+1,#rows do
       if j>i then 
-        local r1,r2 = rows[i],rows[i]
+        local r1,r2 = rows[i], rows[j]
         push(u, {left=r1, right=r2, d=dist(r1, r2)}) end end end
   return sort(u, gt"d")[1] end
 
 function x2d(a,b,c) return (a^2 + c^2 - b^2) / (2*c) end
-function y2d(a,x)   print(a,x); return (math.max(0, math.min(1, x))^2 - a^2)^.5 end
+function y2d(a,x)   x=math.max(0,math.min(1, x)); return (x^2 - a^2)^.5 end
 
 function half(rows)
   local far = furthest(rows)
-  local A,B = far.left, far.right
-  local function project(r) return {row=r, d=x2d(dist(r,A), dist(r,B), far.d)} end
-  local lefts,rights = {},{}
-  for n,dr in pairs(sort(map(rows, project), lt"d")) do
-    row,x = dr.row, dr.x
-    row.x = row.x or x
-    row.y = row.y or y2d(A, x)
-    push( n > #rows/2 and lefts or rights, row) end
-  return lefts, rights end
+  local A,B,c = far.left, far.right, far.d
+  local function project(r) 
+    local a,b = dist(r,A),dist(r,B)
+    return {row=r, a=a, b=b,c=c, x=x2d(a, b, c)} end
+  local lefts,rights,mid = {},{}
+  for n,t in pairs(sort(map(rows, project), lt"x")) do
+    t.row.x = t.row.x or t.x
+    t.row.y = t.row.y or y2d(t.a, t.x)
+    if n == (#rows)//2 then mid = t.row end
+    push(n > (#rows)//2 and lefts or rights, t.row) end
+  return lefts, rights,c end
 
 function cluster(rows, min)
   min = min or (#rows)^the.min
-  local node = {here=rows}
+  local node = {here=rows,}
   if #rows > min then
-    local left,right = half(rows)
+    local left,right,c = half(rows)
+    node.c   = c
     node.left  = cluster(left,min)
     node.right = cluster(right,min) end
   return node end 
@@ -83,7 +86,11 @@ function cluster(rows, min)
 function tree(node, b4)
   if node then
     b4 = b4 or ""
-    print(b4 .. #node.here)
+    local s = ""
+    if not node.left then
+      local here=node.here[1]
+      s=fmt("%30s %s %s",here.lhs,o(here.raw),here.rhs) end
+    print(fmt("%-20s %s", b4 .. (node.c or ""),s ))
     tree(node.left,  "|.. ".. b4)
     tree(node.right, "|.. ".. b4) end end
 
@@ -108,10 +115,17 @@ local eg={}
 function eg.the()   lib.oo(the) end
 function eg.ok()    ok(dofile(the.file)) end
 function eg.data()  map(DATA(ok(dofile(the.file))).rows,oo) end
-function eg.dist()  
+function eg.half()  
   local m=ok(dofile(the.file))
   local rows = map(m.rows, function(row) return asConstruct(m.lo, m.hi, row) end)
-  cluster(rows,1)
+  local lefts, rights = half(rows)
+  print(#lefts, #rights) end
+
+function eg.cluster()  
+  local m=ok(dofile(the.file))
+  local rows = map(m.rows, function(row) return asConstruct(m.lo, m.hi, row) end)
+  tree(cluster(rows,1))
 end
+
 
 if lib.required() then return {STATS=STATS} else lib.main(the,eg) end 
