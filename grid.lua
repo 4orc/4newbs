@@ -51,9 +51,8 @@ function furthest(rows)
   local u={}
   for i = 1,#rows do
     for j = i+1,#rows do
-      if j>i then 
-        local r1,r2 = rows[i], rows[j]
-        push(u, {left=r1, right=r2, d=dist(r1, r2)}) end end end
+      local r1,r2 = rows[i], rows[j]
+      push(u, {left=r1, right=r2, d=dist(r1, r2)}) end end
   return sort(u, gt"d")[1] end
 
 function x2d(a,b,c) return (a^2 + c^2 - b^2) / (2*c) end
