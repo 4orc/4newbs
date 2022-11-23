@@ -33,98 +33,98 @@ local obj,fmt,o,oo,map,shuffle,lt,gt,sort,push,slice  =
 -----------------------------------------------------------------------------------------
 local dist,furthest,x2d,y2d,half,cluster,tree,asConstruct
 
-function asConstruct(lo,hi,t) 
-  local tmp = slice(t,2,-2)
-  return {raw  = tmp,
-          cells= map(tmp, function(x) return (x - lo)/(hi - lo +1E-32) end),
-          lhs  = t[1], 
-          rhs  = t[#t]} end
 
-function dist(row1,row2)
-   local n,d = 0,0
-   for c,x in pairs(row1.cells) do 
-     n = n+1
-     d = d+math.abs(x - row2.cells[c])^the.p end
-  return (d/n)^(1/the.p) end
-
-function furthest(rows)
-  local u={}
-  for i = 1,#rows do
-    for j = i+1,#rows do
-      local r1,r2 = rows[i], rows[j]
-      push(u, {left=r1, right=r2, d=dist(r1, r2)}) end end
-  return sort(u, gt"d")[1] end
-
-function x2d(a,b,c) return (a^2 + c^2 - b^2) / (2*c) end
-function y2d(a,x)   x=math.max(0,math.min(1, x)); return (x^2 - a^2)^.5 end
-
-function half(rows)
-  local far = furthest(rows)
-  local A,B,c = far.left, far.right, far.d
-  local function project(r) 
-    local a,b = dist(r,A),dist(r,B)
-    return {row=r, a=a, b=b,c=c, x=x2d(a, b, c)} end
-  local lefts,rights,mid = {},{}
-  for n,t in pairs(sort(map(rows, project), lt"x")) do
-    t.row.x = t.row.x or t.x
-    t.row.y = t.row.y or y2d(t.a, t.x)
-    if n == (#rows)//2 then mid = t.row end
-    push(n > (#rows)//2 and lefts or rights, t.row) end
-  return lefts, rights,c end
-
-function cluster(rows, min)
-  min = min or (#rows)^the.min
-  local node = {here=rows,}
-  if #rows > min then
-    local left,right,c = half(rows)
-    node.c   = c
-    node.left  = cluster(left,min)
-    node.right = cluster(right,min) end
-  return node end 
-
-function tree(node, b4)
-  if node then
+function cluster(all)
+  local function dist(one,two)
+     local n,d = 0,0
+     for c,x in pairs(one.cells) do 
+       n = n+1
+       d = d+math.abs(x - two.cells[c])^the.p end
+    return (d/n)^(1/the.p) 
+  end --------------------
+  local function furthest(some)
+    local t={}
+    for i = 1,#some do
+      for j = i+1,#some do
+        local left,right = all[i], all[j]
+        push(t, {left=left, right=right, d=dist(left, right)}) end end
+    return sort(t, gt"d")[1] 
+  end ---------------------
+  local function half(some)
+    local far = furthest(some)
+    local left,right,c = far.left, far.right, far.d
+    local function project(this,    a,b,x) 
+      a,b = dist(this,left), dist(this,right)
+      x   = (a^2 + c^2 - b^2) / (2*c)
+      x   = math.max(0, math.min(1, x))
+      return {this=this,  x=x, y =(x^2 - a^2)^.5} end
+    local lefts,rights = {},{}
+    for n,one in pairs(sort(map(some, project), lt"x")) do
+      one.this.x = one.this.x or one.x
+      one.this.y = one.this.y or one.y
+      push(n <= (#some)//2 and lefts or rights, one.this) end
+    return lefts, rights, c 
+  end ---------------------
+  local function tree(some,min,    lefts,rights,node)
+    min = min or (#some)^the.min
+    if #rows > min then
+      lefts, rights, node.c = half(some)
+      node.left  = tree(lefts,min)
+      node.right = tree(rights,min) end
+    return node 
+  end --------- 
+  local function show(node, b4)
     b4 = b4 or ""
-    local s = ""
-    if not node.left then
-      local here=node.here[1]
-      s=fmt("%30s %s %s",here.lhs,o(here.raw),here.rhs) end
-    print(fmt("%-20s %s", b4 .. (node.c or ""),s ))
-    tree(node.left,  "|.. ".. b4)
-    tree(node.right, "|.. ".. b4) end end
+    if node then
+      io.write(b4..(node.c and rnd(node.c) or ""))
+      print(node.left and "" or node.txt)
+      tree(node.left,  "|.. ".. b4)
+      tree(node.right, "|.. ".. b4) end 
+  end ---------------------------------
+  return half, tree, show end
 
 local function ok(t)
-  local template = {rows={},lo=1,hi=1,cols={},domain="string"}
+  local template = {rows={},cols={},domain="string"}
   for key,eg in pairs(template) do
     assert(t[key],                      fmt("[%s] missing",key))
     assert(type(t[key]) == type(eg),    fmt("[%s=%s] is not a [%s]", key,t[key], type(eg))) end 
-  for r,row in pairs(t.rows) do 
-    assert(#row==#t.rows[1],            fmt("row [%s] does not have [%s] cells",r,#t.rows[1])) 
-    assert(type(row[1])    == "string", fmt("row [%s] does not have a LHS name",r))
-    assert(type(row[#row]) == "string", fmt("row [%s] does not have a RHS name",r)) 
+  for r,row in pairs(t.cols) do 
+    assert(#row==#t.cols[1],            fmt("row [%s] lacks [%s] cells",r,#t.rows[1])) 
+    assert(type(row[1])    == "string", fmt("row [%s] lacks LHS txt",r))
+    assert(type(row[#row]) == "string", fmt("row [%s] lacks RHS txt",r)) 
     for c=2,#row-1 do 
       local x = row[c]
-      assert(x//1 == x,             fmt("[%s] not an int",x))
-      assert(x >= t.lo and x<=t.hi, fmt("[%s] out of range",x)) end end
-  return t end
+      assert(x//1 == x,fmt("[%s] not an int",x)) end end
+  return t,lo,hi end
+
+local function columns(cols)
+  local function asColumn(lo,hi,t) 
+    local tmp = slice(t,2,-2)
+    return {raw  = tmp,
+            cells= map(tmp, function(x) return (x - lo)/(hi - lo +1E-32) end),
+            lhs  = t[1], 
+            rhs  = t[#t]} end
+  return map(cols,asColumn) end
+
 ------------------------------------------------------------------------------------------
 --- ## Start-up
 local eg={}
 
 function eg.the()   lib.oo(the) end
 function eg.ok()    ok(dofile(the.file)) end
-function eg.data()  map(DATA(ok(dofile(the.file))).rows,oo) end
-function eg.half()  
-  local m=ok(dofile(the.file))
-  local rows = map(m.rows, function(row) return asConstruct(m.lo, m.hi, row) end)
-  local lefts, rights = half(rows)
-  print(#lefts, #rights) end
+function eg.data()  map(columns(ok(dofile(the.file))).cols,oo) end
+-- function eg.half()  
+--   local half = bicluster.half
+--   local m=ok(dofile(the.file))
+--   local rows = map(m.rows, function(row) return asConstruct(m.lo, m.hi, row) end)
+--   local lefts, rights = half(rows)
+--   print(#lefts, #rights) end
+--
+-- function eg.cluster()  
+--   local m=ok(dofile(the.file))
+--   local rows = map(m.rows, function(row) return asConstruct(m.lo, m.hi, row) end)
+--   tree(cluster(rows,1))
+-- end
+--
 
-function eg.cluster()  
-  local m=ok(dofile(the.file))
-  local rows = map(m.rows, function(row) return asConstruct(m.lo, m.hi, row) end)
-  tree(cluster(rows,1))
-end
-
-
-if lib.required() then return {STATS=STATS} else lib.main(the,eg) end 
+if lib.required() then return {cluster=cluster,columns=columns} else lib.main(the,eg) end 
