@@ -7,8 +7,8 @@
 ---      \ \_,__/  \ \_\\ \_\ \_\\/\____/
 ---       \/___/    \/_/ \/_/\/_/ \/___/ 
                                    
-local l = require"lib"
-local the = l.settings[[
+local lib = require"lib"
+local the = lib.settings[[
 bins.lua : report ranges that distinguish best rows from rest
 (c)2022, Tim Menzies <timm@ieee.org>, BSD-2 
 
@@ -26,14 +26,13 @@ OTHER OPTIONS:
   -g  --go     start-up action            = data
   -h  --help   show help                  = false
 ]]
-local fmt,  csv,  list,map,push,kap,  lt,gt,sort,  o,oo,  obj,  rnd = 
-        l.fmt,    -- string tricks
-        l.csv,    -- file tricks
-        l.list,l.map,l.push,l.kap, -- list tricks
-        l.lt,l.gt,l.sort,          -- sorting tricks
-        l.o,l.oo, -- printing tricks
-        l.obj,    -- object tricks
-        l.rnd     -- random number tricks
+local obj, fmt,  ist,map,push,kap, lt,gt,sort, o,oo, obj, rnd = 
+      lib.obj,                           -- object stuff
+      lib.fmt,                           -- string tricks
+      lib.list,lib.map,lib.push,lib.kap, -- list tricks
+      lib.lt,lib.gt,lib.sort,            -- sorting tricks
+      lib.o,l.oo,                        -- printing tricks
+      lib.rnd                            -- random number tricks
 --------------------------------------------------------------------------------
 -- ## NUM
 local NUM = obj"NUM"
@@ -174,7 +173,7 @@ local DATA = obj"DATA"
 function DATA:new(src)
   self.cols,self.rows = nil,{}
   if   type(src)=="string" 
-  then csv(src,       function(row) self:add(row) end)
+  then lib.csv(src,       function(row) self:add(row) end)
   else map(src or {}, function(row) self:add(row) end) end end
 
 function DATA:add(row) 
@@ -260,4 +259,4 @@ function eg.xys()
   local d = DATA(the.file)
   d:xys() end
 
-if l.required() then return {STATS=STATS} else l.main(the,eg) end 
+if lib.required() then return {STATS=STATS} else lib.main(the,eg) end 
